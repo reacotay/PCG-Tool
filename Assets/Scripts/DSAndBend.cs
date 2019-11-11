@@ -1,14 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
-public class GenerateGround : MonoBehaviour
+public class DSAndBend : MonoBehaviour
 {
     public enum BendAxis { X, Y, Z };
 
     public int mDivisions;
-    public float mSize;
+    public float mSizeX;
+    public float mSizeZ;
     public float mHeight;
 
     public BendAxis axis;
@@ -33,8 +33,10 @@ public class GenerateGround : MonoBehaviour
         Vector2[] uvs = new Vector2[mVertCount];
         int[] tris = new int[mDivisions * mDivisions * 6];
 
-        float halfSize = mSize / 2;
-        float divisionSize = mSize / mDivisions;
+        float halfSizeX = mSizeX / 2;
+        float halfSizeZ = mSizeZ / 2;
+
+        float divisionSize = ((mSizeX + mSizeZ) / 2) / mDivisions;
 
 
         int triOffset = 0;
@@ -43,10 +45,10 @@ public class GenerateGround : MonoBehaviour
         {
             for (int j = 0; j <= mDivisions; j++)
             {
-                vertices[i * (mDivisions + 1) + j] = new Vector3(-halfSize + j * divisionSize, 0f, halfSize - i * divisionSize);
+                vertices[i * (mDivisions + 1) + j] = new Vector3(-halfSizeX + j * divisionSize, 0f, halfSizeZ - i * divisionSize);
                 uvs[i * (mDivisions + 1) + j] = new Vector2((float)i / mDivisions, (float)j / mDivisions);
 
-                if(i < mDivisions && j < mDivisions)
+                if (i < mDivisions && j < mDivisions)
                 {
                     int topLeft = i * (mDivisions + 1) + j;
                     int botLeft = (i + 1) * (mDivisions + 1) + j;
