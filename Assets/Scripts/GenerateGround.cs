@@ -4,30 +4,36 @@ using UnityEngine;
 
 public class GenerateGround : MonoBehaviour
 {
+    public enum BendAxis { X, Y, Z };
+
     public int mDivisions;
     public float mSize;
     public float mHeight;
 
-    Vector3[] mVerts;
+    public BendAxis axis;
+    public float rotate;
+    public float fromPosition;
+    Mesh mesh;
+    Vector3[] vertices;
     int mVertCount;
 
     void Start()
     {
+        mesh = GetComponent<MeshFilter>().mesh;
         GenerateTerrain();
+        Bend();
     }
 
     void GenerateTerrain()
     {
         mVertCount = (mDivisions + 1) * (mDivisions + 1);
-        mVerts = new Vector3[mVertCount];
+        vertices = new Vector3[mVertCount];
         Vector2[] uvs = new Vector2[mVertCount];
         int[] tris = new int[mDivisions * mDivisions * 6];
 
         float halfSize = mSize / 2;
         float divisionSize = mSize / mDivisions;
 
-        Mesh mesh = new Mesh();
-        GetComponent<MeshFilter>().mesh = mesh;
 
         int triOffset = 0;
 
@@ -35,7 +41,7 @@ public class GenerateGround : MonoBehaviour
         {
             for (int j = 0; j <= mDivisions; j++)
             {
-                mVerts[i * (mDivisions + 1) + j] = new Vector3(-halfSize + j * divisionSize, 0f, halfSize - i * divisionSize);
+                vertices[i * (mDivisions + 1) + j] = new Vector3(-halfSize + j * divisionSize, 0f, halfSize - i * divisionSize);
                 uvs[i * (mDivisions + 1) + j] = new Vector2((float)i / mDivisions, (float)j / mDivisions);
 
                 if(i < mDivisions && j < mDivisions)
@@ -55,10 +61,10 @@ public class GenerateGround : MonoBehaviour
                 }
             }
         }
-        mVerts[0].y = Random.Range(-mHeight, mHeight);
-        mVerts[mDivisions].y = Random.Range(-mHeight, mHeight);
-        mVerts[mVerts.Length - 1].y = Random.Range(-mHeight, mHeight);
-        mVerts[mVerts.Length - 1 - mDivisions].y = Random.Range(-mHeight, mHeight);
+        vertices[0].y = Random.Range(-mHeight, mHeight);
+        vertices[mDivisions].y = Random.Range(-mHeight, mHeight);
+        vertices[vertices.Length - 1].y = Random.Range(-mHeight, mHeight);
+        vertices[vertices.Length - 1 - mDivisions].y = Random.Range(-mHeight, mHeight);
 
         int iterations = (int)Mathf.Log(mDivisions, 2);
         int numSquares = 1;
@@ -82,7 +88,7 @@ public class GenerateGround : MonoBehaviour
             mHeight *= .5f;
         }
 
-        mesh.vertices = mVerts;
+        mesh.vertices = vertices;
         mesh.uv = uvs;
         mesh.triangles = tris;
 
@@ -97,11 +103,70 @@ public class GenerateGround : MonoBehaviour
         int botLeft = (row + size) * (mDivisions + 1) + col;
 
         int mid = (int)(row + halfsize) * (mDivisions + 1) + (int)(col + halfsize);
-        mVerts[mid].y = (mVerts[topLeft].y + mVerts[topLeft + size].y + mVerts[botLeft].y + mVerts[botLeft + size].y) * .25f + Random.Range(-offset, offset);
+        vertices[mid].y = (vertices[topLeft].y + vertices[topLeft + size].y + vertices[botLeft].y + vertices[botLeft + size].y) * .25f + Random.Range(-offset, offset);
 
-        mVerts[topLeft + halfsize].y = (mVerts[topLeft].y + mVerts[topLeft + size].y + mVerts[mid].y) / 3 + Random.Range(-offset, offset);
-        mVerts[mid - halfsize].y = (mVerts[topLeft].y + mVerts[botLeft].y + mVerts[mid].y) / 3 + Random.Range(-offset, offset);
-        mVerts[mid + halfsize].y = (mVerts[topLeft + size].y + mVerts[botLeft + size].y + mVerts[mid].y) / 3 + Random.Range(-offset, offset);
-        mVerts[botLeft + halfsize].y = (mVerts[botLeft].y + mVerts[botLeft + size].y + mVerts[mid].y) / 3 + Random.Range(-offset, offset);
+        vertices[topLeft + halfsize].y = (vertices[topLeft].y + vertices[topLeft + size].y + vertices[mid].y) / 3 + Random.Range(-offset, offset);
+        vertices[mid - halfsize].y = (vertices[topLeft].y + vertices[botLeft].y + vertices[mid].y) / 3 + Random.Range(-offset, offset);
+        vertices[mid + halfsize].y = (vertices[topLeft + size].y + vertices[botLeft + size].y + vertices[mid].y) / 3 + Random.Range(-offset, offset);
+        vertices[botLeft + halfsize].y = (vertices[botLeft].y + vertices[botLeft + size].y + vertices[mid].y) / 3 + Random.Range(-offset, offset);
+    }
+
+    void Bend()
+    {
+        mesh = GetComponent<MeshFilter>().mesh;
+        vertices = mesh.vertices;
+
+        if (axis == BendAxis.X)
+        {
+            float meshWidth = mesh.bounds.size.z;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                float formPos = Mathf.Lerp(meshWidth / 2, -meshWidth / 2, fromPosition);
+                float zeroPos = vertices[i].z + formPos;
+                float rotateValue = (-rotate / 2) * (zeroPos / meshWidth);
+
+                zeroPos -= 2 * vertices[i].x * Mathf.Cos((90 - rotateValue) * Mathf.Deg2Rad) - formPos;
+
+                vertices[i].x += zeroPos * Mathf.Sin(rotateValue * Mathf.Deg2Rad);
+                vertices[i].z = zeroPos * Mathf.Cos(rotateValue * Mathf.Deg2Rad) - formPos;
+
+
+            }
+        }
+
+        else if (axis == BendAxis.Y)
+        {
+            float meshWidth = mesh.bounds.size.z;
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                float formPos = Mathf.Lerp(meshWidth / 2, -meshWidth / 2, fromPosition);
+                float zeroPos = vertices[i].z + formPos;
+                float rotateValue = (-rotate / 2) * (zeroPos / meshWidth);
+
+                zeroPos -= 2 * vertices[i].y * Mathf.Cos((90 - rotateValue) * Mathf.Deg2Rad);
+
+                vertices[i].y += zeroPos * Mathf.Sin(rotateValue * Mathf.Deg2Rad);
+                vertices[i].z = zeroPos * Mathf.Cos(rotateValue * Mathf.Deg2Rad) - formPos;
+            }
+        }
+        else if (axis == BendAxis.Z)
+        {
+            float meshWidth = mesh.bounds.size.x;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                float formPos = Mathf.Lerp(meshWidth / 2, -meshWidth / 2, fromPosition);
+                float zeroPos = vertices[i].x + formPos;
+                float rotateValue = (-rotate / 2) * (zeroPos / meshWidth);
+
+                zeroPos -= 2 * vertices[i].y * Mathf.Cos((90 - rotateValue) * Mathf.Deg2Rad);
+
+                vertices[i].y += zeroPos * Mathf.Sin(rotateValue * Mathf.Deg2Rad);
+                vertices[i].x = zeroPos * Mathf.Cos(rotateValue * Mathf.Deg2Rad) - formPos;
+            }
+        }
+
+        mesh.vertices = vertices;
+        mesh.RecalculateBounds();
     }
 }
