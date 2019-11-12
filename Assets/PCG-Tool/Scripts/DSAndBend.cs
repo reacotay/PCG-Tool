@@ -15,6 +15,8 @@ public class DSAndBend : MonoBehaviour
     public BendAxis axis;
     public float rotate;
     public float fromPosition;
+
+    public bool Save;
     Mesh mesh;
     Vector3[] vertices;
     int mVertCount;
@@ -24,6 +26,8 @@ public class DSAndBend : MonoBehaviour
         mesh = GetComponent<MeshFilter>().mesh;
         GenerateTerrain();
         Bend();
+
+        if (Save)
         SaveMesh(mesh, "Cave Top", true);
     }
 
