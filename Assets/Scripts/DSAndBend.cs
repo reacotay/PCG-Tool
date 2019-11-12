@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class DSAndBend : MonoBehaviour
@@ -23,7 +24,7 @@ public class DSAndBend : MonoBehaviour
         mesh = GetComponent<MeshFilter>().mesh;
         GenerateTerrain();
         Bend();
-
+        SaveMesh(mesh, "Cave Top", true);
     }
 
     void GenerateTerrain()
@@ -36,8 +37,8 @@ public class DSAndBend : MonoBehaviour
         float halfSizeX = mSizeX / 2;
         float halfSizeZ = mSizeZ / 2;
 
-        float divisionSize = ((mSizeX + mSizeZ) / 2) / mDivisions;
-
+        float divisionSizeX = mSizeX / mDivisions;
+        float divisionSizeZ = mSizeZ / mDivisions;
 
         int triOffset = 0;
 
@@ -45,7 +46,7 @@ public class DSAndBend : MonoBehaviour
         {
             for (int j = 0; j <= mDivisions; j++)
             {
-                vertices[i * (mDivisions + 1) + j] = new Vector3(-halfSizeX + j * divisionSize, 0f, halfSizeZ - i * divisionSize);
+                vertices[i * (mDivisions + 1) + j] = new Vector3(-halfSizeX + j * divisionSizeX, 0f, halfSizeZ - i * divisionSizeZ);
                 uvs[i * (mDivisions + 1) + j] = new Vector2((float)i / mDivisions, (float)j / mDivisions);
 
                 if (i < mDivisions && j < mDivisions)
